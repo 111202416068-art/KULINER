@@ -7,25 +7,41 @@
     + Tambah Kategori
 </a>
 
-<table class="table">
+<table class="table table-bordered">
     <thead>
         <tr>
             <th>No</th>
             <th>Nama Kategori</th>
+            <th>Aksi</th>
         </tr>
     </thead>
 
     <tbody>
         <?php if (!empty($kategori)): ?>
-            <?php $no = 1; foreach ($kategori as $k): ?>
+            <?php $no = 1; ?>
+            <?php foreach ($kategori as $k): ?>
                 <tr>
                     <td><?= $no++; ?></td>
                     <td><?= $k['nama_kategori']; ?></td>
+                    <td>
+                        <a href="<?= base_url('kategori/edit/' . $k['id']); ?>"
+                           class="btn btn-warning btn-sm">
+                            Edit
+                        </a>
+
+                        <a href="<?= base_url('kategori/delete/' . $k['id']); ?>"
+                           class="btn btn-danger btn-sm"
+                           onclick="return confirm('Yakin ingin menghapus data ini?')">
+                            Hapus
+                        </a>
+                    </td>
                 </tr>
             <?php endforeach; ?>
         <?php else: ?>
             <tr>
-                <td colspan="2">Data kosong</td>
+                <td colspan="3" class="text-center">
+                    Data kosong
+                </td>
             </tr>
         <?php endif; ?>
     </tbody>
