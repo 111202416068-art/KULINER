@@ -18,8 +18,11 @@ class Kuliner extends BaseController
         $this->reviewModel   = new ReviewModel();
         $this->kategoriModel = new KategoriModel();
     }
+
     public function index()
     {
+        // Aktifkan Custom Helper Bintang untuk merender grafis
+        helper('bintang');
         $db = \Config\Database::connect();
 
         // 1. Ambil data dari input filter (GET)
@@ -31,8 +34,6 @@ class Kuliner extends BaseController
         $builder->join('kategori', 'kategori.id_kategori = kuliner.kategori_id', 'left');
         $builder->join('review', 'review.kuliner_id = kuliner.id', 'left');
 
-        // 2. LOGIKA FILTER
-        // Jika ada input pencarian nama atau alamat
         if ($search) {
             $builder->groupStart()
                 ->like('kuliner.nama', $search)
@@ -40,7 +41,6 @@ class Kuliner extends BaseController
                 ->groupEnd();
         }
 
-        // Jika kategori dipilih
         if ($kategori_id) {
             $builder->where('kuliner.kategori_id', $kategori_id);
         }
@@ -50,15 +50,45 @@ class Kuliner extends BaseController
 
         $reviewModel = new \App\Models\ReviewModel();
         $kategoriModel = new \App\Models\KategoriModel();
-
         $avgData = $reviewModel->selectAvg('rating', 'rating')->first();
+
+        // ==========================================
+        // CONSUME API EKSTERNAL + CACHING (POIN 5)
+        // ==========================================
+        if (! $dataCuaca = cache('cuaca_semarang')) {
+            $client = \Config\Services::curlrequest();
+            try {
+                $response = $client->request('GET', 'https://wttr.in/Semarang?format=j1', [
+                    'headers' => [
+                        'User-Agent' => 'Mozilla/5.0'
+                    ],
+                    'timeout' => 5
+                ]);
+
+                $rawJson = json_decode($response->getBody(), true);
+                $currentCondition = $rawJson['current_condition'][0];
+                $dataCuaca = [
+                    'temp' => $currentCondition['temp_C'] . '°C',
+                    'desc' => $currentCondition['lang_id'][0]['value'] ?? $currentCondition['weatherDesc'][0]['value'],
+                    'humidity' => $currentCondition['humidity'] . '%'
+                ];
+
+                cache()->save('cuaca_semarang', $dataCuaca, 600);
+            } catch (\Exception $e) {
+                $dataCuaca = [
+                    'temp' => '--',
+                    'desc' => 'Gagal memuat data cuaca (Offline)',
+                    'humidity' => '--'
+                ];
+            }
+        }
 
         $data = [
             'kuliner'     => $kuliner,
             'kategori'    => $kategoriModel->findAll(),
             'totalReview' => $reviewModel->countAll(),
             'rataRating'  => $avgData['rating'] ?? 0,
-            'cuaca '       => $dataCuaca // Kirim data cuaca ke View
+            'cuaca'       => $dataCuaca
         ];
 
         return view('kuliner/index', $data);
@@ -67,57 +97,38 @@ class Kuliner extends BaseController
     public function create()
     {
         $kategoriModel = new \App\Models\KategoriModel();
-
         $data = [
             'kategori' => $kategoriModel->findAll(),
         ];
-
         return view('kuliner/create', $data);
     }
 
     public function save()
     {
-        // 1. Ambil ID dari session (Pastikan saat login ID ini sudah di-set)
-        $userId = session()->get('id');
+        $userId = session()->get('id') ?? 1;
 
-        // Cek jika session kosong, arahkan ke login agar tidak error Foreign Key
-        if (!$userId) {
-            return redirect()->to('/login')->with('error', 'Sesi habis, silakan login kembali.');
-        }
-
-        // 2. Inisialisasi variabel $namaFoto agar tidak undefined
         $fileFoto = $this->request->getFile('gambar');
-
         if ($fileFoto && $fileFoto->isValid() && !$fileFoto->hasMoved()) {
             $namaFoto = $fileFoto->getRandomName();
             $fileFoto->move('uploads', $namaFoto);
         } else {
-            $namaFoto = 'default.jpg'; // Nilai default jika tidak upload foto
+            $namaFoto = 'default.jpg';
         }
 
-        $userId = session()->get('id');
-
-        if (!$userId || $userId == 0) {
-            return redirect()->back()->with('error', 'Hanya user terdaftar yang bisa menambah data.');
-        }
-
-        // 3. Simpan data Kuliner
         $this->kulinerModel->insert([
             'nama'        => $this->request->getPost('nama'),
             'alamat'      => $this->request->getPost('alamat'),
             'kategori_id' => $this->request->getPost('kategori_id'),
             'lat'         => $this->request->getPost('lat'),
             'lng'         => $this->request->getPost('lng'),
-            'foto'        => $namaFoto, // Variabel $namaFoto sekarang pasti ada
+            'foto'        => $namaFoto,
         ]);
 
-        // 4. Ambil ID kuliner yang baru saja disimpan
         $kulinerId = $this->kulinerModel->insertID();
 
-        // 5. Simpan ke tabel Review
         $this->reviewModel->insert([
             'kuliner_id' => $kulinerId,
-            'user_id'    => $userId, // Menggunakan variabel $userId dari session
+            'user_id'    => $userId,
             'rating'     => $this->request->getPost('rating'),
             'isi'        => $this->request->getPost('review')
         ]);
@@ -131,7 +142,6 @@ class Kuliner extends BaseController
             return redirect()->to('/kuliner');
         }
 
-        // Ambil data kuliner lengkap dengan ratingnya menggunakan query builder
         $db = \Config\Database::connect();
         $builder = $db->table('kuliner');
         $builder->select('kuliner.*, review.rating, review.isi as review_text');
@@ -155,6 +165,7 @@ class Kuliner extends BaseController
 
     public function update($id)
     {
+        // 1. Update data utama di tabel kuliner
         $this->kulinerModel->save([
             'id'          => $id,
             'nama'        => $this->request->getPost('nama'),
@@ -162,11 +173,34 @@ class Kuliner extends BaseController
             'kategori_id' => $this->request->getPost('kategori_id'),
             'lat'         => $this->request->getPost('lat'),
             'lng'         => $this->request->getPost('lng'),
-            'rating'      => $this->request->getPost('rating'),
-            'review'      => $this->request->getPost('review')
         ]);
 
-        return redirect()->to('/kuliner');
+        // 2. Ambil data rating dan review dari form input
+        $ratingInput = $this->request->getPost('rating');
+        $reviewInput = $this->request->getPost('review');
+
+        // 3. Cek apakah kuliner ini sudah punya review sebelumnya di database
+        $existingReview = $this->reviewModel->where('kuliner_id', $id)->first();
+
+        if ($existingReview) {
+            // Jika sudah ada review, kita UPDATE review yang lama
+            $this->reviewModel->update($existingReview['id_review'], [
+                'rating' => $ratingInput,
+                'isi'    => $reviewInput
+            ]);
+        } else {
+            // Jika ternyata belum ada review sama sekali, kita INSERT baru
+            $userId = session()->get('id') ?? 1; // Default ke ID 1 jika session kosong
+            $this->reviewModel->insert([
+                'kuliner_id' => $id,
+                'user_id'    => $userId,
+                'rating'     => $ratingInput,
+                'isi'        => $reviewInput
+            ]);
+        }
+
+        // 4. Kembali ke halaman utama dashboard dengan pesan sukses
+        return redirect()->to('/kuliner')->with('success', 'Data dan Review berhasil diperbarui!');
     }
 
     public function delete($id)
@@ -183,11 +217,8 @@ class Kuliner extends BaseController
     {
         $data = [
             'kuliner' => $this->kulinerModel->find($id),
-            'review'  => $this->reviewModel
-                ->where('kuliner_id', $id)
-                ->findAll()
+            'review'  => $this->reviewModel->where('kuliner_id', $id)->findAll()
         ];
-
         return view('kuliner/detail', $data);
     }
 }
