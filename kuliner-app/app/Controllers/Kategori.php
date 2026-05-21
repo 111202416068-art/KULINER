@@ -10,10 +10,12 @@ class Kategori extends BaseController
 
     public function __construct()
     {
+        // Memanggil model kategori
         $this->kategoriModel = new KategoriModel();
     }
 
-    // Tampilkan data kategori
+    
+    // TAMPIL DATA KATEGORI
     public function index()
     {
         $data = [
@@ -24,7 +26,7 @@ class Kategori extends BaseController
         return view('kategori/index', $data);
     }
 
-    // Form tambah kategori
+    // FORM TAMBAH KATEGORI
     public function create()
     {
         $data = [
@@ -33,39 +35,49 @@ class Kategori extends BaseController
 
         return view('kategori/create', $data);
     }
-
-    // Simpan kategori baru
+ 
+    // SIMPAN DATA KATEGORI
     public function save()
     {
         $this->kategoriModel->save([
-            'nama_kategori' => $this->request->getPost('nama_kategori')
+
+            'nama_kategori' =>
+                $this->request->getPost('nama_kategori')
+
         ]);
 
         return redirect()->to('/kategori');
     }
 
-    // Form edit kategori
+    // FORM EDIT KATEGORI
     public function edit($id)
     {
         $data = [
-            'title'    => 'Edit Kategori',
-            'kategori' => $this->kategoriModel->find($id)
+
+            'title' => 'Edit Kategori',
+
+            'kategori' =>
+                $this->kategoriModel->find($id)
+
         ];
 
         return view('kategori/edit', $data);
     }
 
-    // Update kategori
+    // UPDATE DATA KATEGORI
     public function update($id)
     {
         $this->kategoriModel->update($id, [
-            'nama_kategori' => $this->request->getPost('nama_kategori')
+
+            'nama_kategori' =>
+                $this->request->getPost('nama_kategori')
+
         ]);
 
         return redirect()->to('/kategori');
     }
 
-    // Hapus kategori
+    // HAPUS DATA KATEGORI
     public function delete($id)
     {
         $this->kategoriModel->delete($id);
