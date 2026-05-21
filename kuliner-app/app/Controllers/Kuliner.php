@@ -57,7 +57,8 @@ class Kuliner extends BaseController
             'kuliner'     => $kuliner,
             'kategori'    => $kategoriModel->findAll(),
             'totalReview' => $reviewModel->countAll(),
-            'rataRating'  => $avgData['rating'] ?? 0
+            'rataRating'  => $avgData['rating'] ?? 0,
+            'cuaca '       => $dataCuaca // Kirim data cuaca ke View
         ];
 
         return view('kuliner/index', $data);

@@ -41,6 +41,19 @@
 
 </div>
 
+<div class="card mb-4 shadow-sm border-0 bg-light">
+    <div class="card-body d-flex align-items-center justify-content-between p-3">
+        <div>
+            <h6 class="text-muted small fw-bold mb-1"><i class="bi bi-cloud-sun-fill text-info"></i> INFO CUACA KOTA SEKARANG</h6>
+            <span class="fw-bold text-dark fs-5"><?= $cuaca['desc']; ?></span>
+        </div>
+        <div class="text-end">
+            <span class="badge bg-primary fs-6 p-2">Suhu: <?= $cuaca['temp']; ?></span>
+            <span class="badge bg-secondary fs-6 p-2">Kelembapan: <?= $cuaca['humidity']; ?></span>
+        </div>
+    </div>
+</div>
+
 <!-- MAP -->
 <div class="card mb-4 shadow-sm">
     <div class="card-header bg-white fw-bold text-primary">
