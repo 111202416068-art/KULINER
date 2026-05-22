@@ -3,169 +3,137 @@
 namespace App\Controllers;
 
 use App\Models\KulinerModel;
-use App\Models\ReviewModel;
 use App\Models\KategoriModel;
+use App\Models\ReviewModel;
 
 class Kuliner extends BaseController
 {
     protected $kulinerModel;
-    protected $reviewModel;
     protected $kategoriModel;
+    protected $reviewModel;
 
     public function __construct()
     {
-        $this->kulinerModel  = new KulinerModel();
-        $this->reviewModel   = new ReviewModel();
+        $this->kulinerModel = new KulinerModel();
         $this->kategoriModel = new KategoriModel();
+        $this->reviewModel = new ReviewModel();
+        
+        // Load helper bawaan dan custom helper bintang
+        helper(['bintang', 'url', 'form']);
     }
 
     public function index()
     {
-        // Aktifkan Custom Helper Bintang untuk merender grafis
-        helper('bintang');
-        $db = \Config\Database::connect();
+        $search   = $this->request->getVar('search');
+        $kategori = $this->request->getVar('kategori');
 
-        // 1. Ambil data dari input filter (GET)
-        $search   = $this->request->getGet('search');
-        $kategori_id = $this->request->getGet('kategori');
+        // Mengambil data dari model yang sudah diperbaiki query-nya
+        $dataKuliner = $this->kulinerModel->getKulinerWithRating($search, $kategori);
 
-        $builder = $db->table('kuliner');
-        $builder->select('kuliner.*, kategori.nama_kategori, review.rating, review.isi as review_text');
-        $builder->join('kategori', 'kategori.id_kategori = kuliner.kategori_id', 'left');
-        $builder->join('review', 'review.kuliner_id = kuliner.id', 'left');
-
-        if ($search) {
-            $builder->groupStart()
-                ->like('kuliner.nama', $search)
-                ->orLike('kuliner.alamat', $search)
-                ->groupEnd();
+        // Hitung statistik dashboard
+        $totalReview = $this->reviewModel->countAllResults();
+        $allReviews = $this->reviewModel->findAll();
+        $totalRatingValue = 0;
+        foreach ($allReviews as $r) {
+            $totalRatingValue += (float)$r['rating'];
         }
+        $rataRating = $totalReview > 0 ? ($totalRatingValue / $totalReview) : 0;
 
-        if ($kategori_id) {
-            $builder->where('kuliner.kategori_id', $kategori_id);
-        }
+        // --- CONSUME API CUACA KOTA SEMARANG ---
+        $cache = \Config\Services::cache();
+        $cuaca = $cache->get('cuaca_semarang');
 
-        $builder->groupBy('kuliner.id');
-        $kuliner = $builder->get()->getResultArray();
-
-        $reviewModel = new \App\Models\ReviewModel();
-        $kategoriModel = new \App\Models\KategoriModel();
-        $avgData = $reviewModel->selectAvg('rating', 'rating')->first();
-
-        // ==========================================
-        // CONSUME API EKSTERNAL + CACHING (POIN 5)
-        // ==========================================
-        if (! $dataCuaca = cache('cuaca_semarang')) {
-            $client = \Config\Services::curlrequest();
+        if (!$cuaca) {
             try {
+                $client = \Config\Services::curlrequest();
                 $response = $client->request('GET', 'https://wttr.in/Semarang?format=j1', [
-                    'headers' => [
-                        'User-Agent' => 'Mozilla/5.0'
-                    ],
                     'timeout' => 5
                 ]);
-
-                $rawJson = json_decode($response->getBody(), true);
-                $currentCondition = $rawJson['current_condition'][0];
-                $dataCuaca = [
-                    'temp' => $currentCondition['temp_C'] . '°C',
-                    'desc' => $currentCondition['lang_id'][0]['value'] ?? $currentCondition['weatherDesc'][0]['value'],
-                    'humidity' => $currentCondition['humidity'] . '%'
-                ];
-
-                cache()->save('cuaca_semarang', $dataCuaca, 600);
+                $body = json_decode($response->getBody(), true);
+                
+                if (isset($body['current_condition'][0])) {
+                    $cond = $body['current_condition'][0];
+                    $cuaca = [
+                        'desc'     => isset($cond['lang_id'][0]['value']) ? $cond['lang_id'][0]['value'] : $cond['weatherDesc'][0]['value'],
+                        'temp'     => $cond['temp_C'] . '°C',
+                        'humidity' => $cond['humidity'] . '%'
+                    ];
+                    $cache->save('cuaca_semarang', $cuaca, 600);
+                }
             } catch (\Exception $e) {
-                $dataCuaca = [
-                    'temp' => '--',
-                    'desc' => 'Gagal memuat data cuaca (Offline)',
+                $cuaca = [
+                    'desc'     => 'Informasi cuaca tidak tersedia',
+                    'temp'     => '--',
                     'humidity' => '--'
                 ];
             }
         }
 
         $data = [
-            'kuliner'     => $kuliner,
-            'kategori'    => $kategoriModel->findAll(),
-            'totalReview' => $reviewModel->countAll(),
-            'rataRating'  => $avgData['rating'] ?? 0,
-            'cuaca'       => $dataCuaca
+            'title'       => 'Dashboard Direktori Kuliner',
+            'kuliner'     => $dataKuliner,
+            'kategori'    => $this->kategoriModel->findAll(),
+            'totalReview' => $totalReview,
+            'rataRating'  => $rataRating,
+            'cuaca'       => $cuaca
         ];
 
         return view('kuliner/index', $data);
     }
 
+    public function detail($id)
+    {
+        $data = [
+            'title'   => 'Detail Kuliner',
+            'kuliner' => $this->kulinerModel->find($id)
+        ];
+        return view('kuliner/detail', $data);
+    }
+
     public function create()
     {
-        $kategoriModel = new \App\Models\KategoriModel();
         $data = [
-            'kategori' => $kategoriModel->findAll(),
+            'title'    => 'Tambah Data Kuliner',
+            'kategori' => $this->kategoriModel->findAll()
         ];
         return view('kuliner/create', $data);
     }
 
     public function save()
     {
-        $userId = session()->get('id') ?? 1;
-
-        $fileFoto = $this->request->getFile('gambar');
+        $fileFoto = $this->request->getFile('foto');
+        $namaFoto = 'default.jpg';
+        
         if ($fileFoto && $fileFoto->isValid() && !$fileFoto->hasMoved()) {
             $namaFoto = $fileFoto->getRandomName();
             $fileFoto->move('uploads', $namaFoto);
-        } else {
-            $namaFoto = 'default.jpg';
         }
 
-        $this->kulinerModel->insert([
+        $this->kulinerModel->save([
             'nama'        => $this->request->getPost('nama'),
             'alamat'      => $this->request->getPost('alamat'),
             'kategori_id' => $this->request->getPost('kategori_id'),
             'lat'         => $this->request->getPost('lat'),
             'lng'         => $this->request->getPost('lng'),
-            'foto'        => $namaFoto,
+            'foto'        => $namaFoto
         ]);
 
-        $kulinerId = $this->kulinerModel->insertID();
-
-        $this->reviewModel->insert([
-            'kuliner_id' => $kulinerId,
-            'user_id'    => $userId,
-            'rating'     => $this->request->getPost('rating'),
-            'isi'        => $this->request->getPost('review')
-        ]);
-
-        return redirect()->to('/kuliner')->with('success', 'Data berhasil disimpan!');
+        return redirect()->to('/kuliner');
     }
 
     public function edit($id)
     {
-        if (session()->get('role') == 'pengunjung') {
-            return redirect()->to('/kuliner');
-        }
-
-        $db = \Config\Database::connect();
-        $builder = $db->table('kuliner');
-        $builder->select('kuliner.*, review.rating, review.isi as review_text');
-        $builder->join('review', 'review.kuliner_id = kuliner.id', 'left');
-        $builder->where('kuliner.id', $id);
-
-        $kuliner = $builder->get()->getRowArray();
-
-        if (!$kuliner) {
-            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound("Data kuliner ID $id tidak ditemukan.");
-        }
-
         $data = [
             'title'    => 'Edit Data Kuliner',
-            'kuliner'  => $kuliner,
-            'kategori' => $this->kategoriModel->findAll()
+            'kuliner'  => $this->kulinerModel->find($id),
+            'kategori' => $this->kategoriModel->findAll(),
+            'review'   => $this->reviewModel->where('kuliner_id', $id)->first()
         ];
-
         return view('kuliner/edit', $data);
     }
 
     public function update($id)
     {
-        // 1. Update data utama di tabel kuliner
         $this->kulinerModel->save([
             'id'          => $id,
             'nama'        => $this->request->getPost('nama'),
@@ -175,22 +143,18 @@ class Kuliner extends BaseController
             'lng'         => $this->request->getPost('lng'),
         ]);
 
-        // 2. Ambil data rating dan review dari form input
         $ratingInput = $this->request->getPost('rating');
         $reviewInput = $this->request->getPost('review');
 
-        // 3. Cek apakah kuliner ini sudah punya review sebelumnya di database
         $existingReview = $this->reviewModel->where('kuliner_id', $id)->first();
 
         if ($existingReview) {
-            // Jika sudah ada review, kita UPDATE review yang lama
             $this->reviewModel->update($existingReview['id_review'], [
                 'rating' => $ratingInput,
                 'isi'    => $reviewInput
             ]);
         } else {
-            // Jika ternyata belum ada review sama sekali, kita INSERT baru
-            $userId = session()->get('id') ?? 1; // Default ke ID 1 jika session kosong
+            $userId = session()->get('id') ?? 1;
             $this->reviewModel->insert([
                 'kuliner_id' => $id,
                 'user_id'    => $userId,
@@ -199,26 +163,12 @@ class Kuliner extends BaseController
             ]);
         }
 
-        // 4. Kembali ke halaman utama dashboard dengan pesan sukses
-        return redirect()->to('/kuliner')->with('success', 'Data dan Review berhasil diperbarui!');
+        return redirect()->to('/kuliner')->with('success', 'Data berhasil diperbarui!');
     }
 
     public function delete($id)
     {
-        if (session()->get('role') == 'pengunjung') {
-            return redirect()->to('/kuliner');
-        }
-
         $this->kulinerModel->delete($id);
         return redirect()->to('/kuliner');
-    }
-
-    public function detail($id)
-    {
-        $data = [
-            'kuliner' => $this->kulinerModel->find($id),
-            'review'  => $this->reviewModel->where('kuliner_id', $id)->findAll()
-        ];
-        return view('kuliner/detail', $data);
     }
 }

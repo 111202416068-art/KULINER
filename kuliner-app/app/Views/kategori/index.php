@@ -1,50 +1,79 @@
-<?= $this->extend('layout/template'); ?>
-<?= $this->section('content'); ?>
+<?php echo $this->extend('layout/template'); ?>
+<?php echo $this->section('content'); ?>
 
-<h3>Data Kategori</h3>
+<main id="main" class="main">
 
-<a href="<?= base_url('kategori/create'); ?>" class="btn btn-primary mb-3">
-    + Tambah Kategori
-</a>
+    <div class="pagetitle mb-4">
+        <h1 class="fw-bold text-primary">Manajemen Kategori Kuliner</h1>
+        <nav>
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="/kuliner">Dashboard</a></li>
+                <li class="breadcrumb-item active">Kategori</li>
+            </ol>
+        </nav>
+    </div>
 
-<table class="table table-bordered">
-    <thead>
-        <tr>
-            <th>No</th>
-            <th>Nama Kategori</th>
-            <th>Aksi</th>
-        </tr>
-    </thead>
+    <div class="row">
+        <div class="col-xl-8 col-lg-10 col-md-12">
 
-    <tbody>
-        <?php if (!empty($kategori)): ?>
-            <?php $no = 1; ?>
-            <?php foreach ($kategori as $k): ?>
-                <tr>
-                    <td><?= $no++; ?></td>
-                    <td><?= $k['nama_kategori']; ?></td>
-                    <td>
-                        <a href="<?= base_url('kategori/edit/' . $k['id']); ?>"
-                           class="btn btn-warning btn-sm">
-                            Edit
-                        </a>
+            <div class="mb-3">
+                <a href="<?php echo base_url('kategori/create'); ?>" class="btn btn-primary shadow-sm px-3">
+                    <i class="bi bi-plus-circle-fill me-1"></i> Tambah Kategori Baru
+                </a>
+            </div>
 
-                        <a href="<?= base_url('kategori/delete/' . $k['id']); ?>"
-                           class="btn btn-danger btn-sm"
-                           onclick="return confirm('Yakin ingin menghapus data ini?')">
-                            Hapus
-                        </a>
-                    </td>
-                </tr>
-            <?php endforeach; ?>
-        <?php else: ?>
-            <tr>
-                <td colspan="3" class="text-center">
-                    Data kosong
-                </td>
-            </tr>
-        <?php endif; ?>
-    </tbody>
-</table>
+            <div class="card shadow-sm border-0" style="border-radius: 8px;">
+                <div class="card-header bg-white fw-bold text-primary py-3 border-bottom-0">
+                    <i class="bi bi-tags-fill me-1"></i> Daftar Kategori Terdaftar
+                </div>
+                
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle text-center mb-0">
+                            <thead class="table-light text-secondary small fw-bold text-uppercase">
+                                <tr>
+                                    <th width="70" class="py-3">No</th>
+                                    <th class="text-start py-3">Nama Kategori</th>
+                                    <th width="150" class="py-3">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if(!empty($kategori)): ?>
+                                    <?php $no = 1; foreach($kategori as $kat): ?>
+                                        <tr>
+                                            <td class="py-3 text-muted"><?php echo $no++; ?></td>
+                                            <td class="text-start py-3 px-3 fw-semibold text-dark">
+                                                <?php echo $kat['nama_kategori']; ?>
+                                            </td>
+                                            <td class="py-3">
+                                                <div class="d-flex justify-content-center gap-2">
+                                                    <a href="/kategori/edit/<?php echo $kat['id_kategori']; ?>" class="btn btn-outline-primary btn-sm px-2" title="Edit Kategori">
+                                                        <i class="bi bi-pencil-square"></i>
+                                                    </a>
+                                                    <a href="/kategori/delete/<?php echo $kat['id_kategori']; ?>" class="btn btn-outline-danger btn-sm px-2" onclick="return confirm('Yakin ingin menghapus kategori <?php echo $kat['nama_kategori']; ?>?')" title="Hapus Kategori">
+                                                        <i class="bi bi-trash-fill"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                        <tr>
+                                            <td colspan="3" class="text-muted py-5">
+                                                <i class="bi bi-info-circle fs-3 d-block mb-2 text-secondary"></i>
+                                                Belum ada data kategori kuliner tersedia.
+                                            </td>
+                                        </tr>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
 
-<?= $this->endSection(); ?>
+        </div>
+    </div>
+
+</main>
+
+<?php echo $this->endSection(); ?>

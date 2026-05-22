@@ -43,5 +43,5 @@ $routes->post('payment/notification', 'Payment::notification');
 
 // Rute Khusus Filter Terproteksi (Jika diperlukan nanti)
 $routes->group('', ['filter' => 'auth'], function ($routes) {
-    // Ruang modifikasi akun terproteksi
+
 });

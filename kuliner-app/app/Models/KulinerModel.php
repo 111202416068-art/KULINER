@@ -10,38 +10,40 @@ class KulinerModel extends Model
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = true;
     protected $returnType       = 'array';
-    protected $useSoftDeletes   = false;
-    protected $protectFields    = true;
-    // app/Models/KulinerModel.php
-    protected $allowedFields = ['nama', 'alamat', 'kategori_id', 'lat', 'lng', 'foto'];
+    protected $allowedFields    = ['nama', 'alamat', 'kategori_id', 'lat', 'lng', 'foto'];
 
-    protected bool $allowEmptyInserts = false;
-    protected bool $updateOnlyChanged = true;
+    // Method vital untuk menggabungkan data kuliner, kategori, dan ulasan review terbaru
+    public function getKulinerWithRating($search = null, $kategori = null)
+    {
+        $builder = $this->db->table('kuliner');
+        $builder->select('kuliner.*, kategori.nama_kategori');
+        $builder->join('kategori', 'kategori.id_kategori = kuliner.kategori_id', 'left');
 
-    protected array $casts = [];
-    protected array $castHandlers = [];
+        if ($search) {
+            $builder->groupStart()
+                    ->like('kuliner.nama', $search)
+                    ->orLike('kuliner.alamat', $search)
+                    ->groupEnd();
+        }
 
-    // Dates
-    protected $useTimestamps = false;
-    protected $dateFormat    = 'datetime';
-    protected $createdField  = 'created_at';
-    protected $updatedField  = 'updated_at';
-    protected $deletedField  = 'deleted_at';
+        if ($kategori) {
+            $builder->where('kuliner.kategori_id', $kategori);
+        }
 
-    // Validation
-    protected $validationRules      = [];
-    protected $validationMessages   = [];
-    protected $skipValidation       = false;
-    protected $cleanValidationRules = true;
+        $kulinerData = $builder->get()->getResultArray();
 
-    // Callbacks
-    protected $allowCallbacks = true;
-    protected $beforeInsert   = [];
-    protected $afterInsert    = [];
-    protected $beforeUpdate   = [];
-    protected $afterUpdate    = [];
-    protected $beforeFind     = [];
-    protected $afterFind      = [];
-    protected $beforeDelete   = [];
-    protected $afterDelete    = [];
+        // Ambil data review & rating per lokasi secara dinamis tanpa merusak baris tabel utama
+        foreach ($kulinerData as $index => $k) {
+            $review = $this->db->table('review')
+                               ->where('kuliner_id', $k['id'])
+                               ->orderBy('id', 'DESC')
+                               ->get()
+                               ->getRowArray();
+            
+            $kulinerData[$index]['rating'] = $review['rating'] ?? 0;
+            $kulinerData[$index]['review_text'] = $review['isi'] ?? '-';
+        }
+
+        return $kulinerData;
+    }
 }
