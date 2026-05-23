@@ -1,4 +1,4 @@
-# 🍽️ Aplikasi Direktori Kuliner Berbasis CodeIgniter 4
+# 🍽️ Aplikasi review Kuliner dan jajanan Berbasis CodeIgniter 4
 
 Aplikasi web direktori kuliner ini dibangun menggunakan arsitektur **Model-View-Controller (MVC)** memanfaatkan framework **CodeIgniter 4** dan basis data **MySQL**. Proyek ini ditujukan untuk memenuhi tugas besar mata kuliah Pemrograman Web Lanjut di Universitas Dian Nuswantoro.
 
