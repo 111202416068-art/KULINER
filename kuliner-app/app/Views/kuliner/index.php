@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 <?php echo $this->extend('layout/template'); ?>
 <?php echo $this->section('content'); ?>
 <?php
@@ -7,14 +6,11 @@ $totalReview = $totalReview ?? 0;
 $rataRating = $rataRating ?? 0;
 $cuaca = $cuaca ?? ['desc' => '-', 'temp' => '-', 'humidity' => '-'];
 ?>
-=======
-<?= $this->extend('layout/template'); ?>
-<?= $this->section('content'); ?>
->>>>>>> 053b1fb2a1721913e229d94d0271865be1200e3a
 
-<h3>Data Kategori</h3>
+<div class="pagetitle mb-4">
+    <h1 class="fw-bold text-primary">Dashboard Direktori Kuliner</h1>
+</div>
 
-<<<<<<< HEAD
 <div class="row mb-4">
     <div class="col-md-4 mb-3">
         <div class="card shadow-sm border-0 border-start border-primary border-4 h-100">
@@ -66,33 +62,35 @@ $cuaca = $cuaca ?? ['desc' => '-', 'temp' => '-', 'humidity' => '-'];
     </div>
 </div>
 
-<div class="card mb-3 shadow-sm">
-    <div class="card-body">
-        <form method="get" class="row g-2">
-            <div class="col-md-4">
-                <input type="text" name="search" class="form-control" placeholder="Cari nama / alamat..." value="<?php echo $_GET['search'] ?? ''; ?>">
-                <div class="card mb-3 shadow-sm">
-                    <div class="card-body">
-                        <form method="get" class="row g-2">
-                            <div class="col-md-4">
-                                <input type="text" name="search" class="form-control" placeholder="Cari nama / alamat..." value="<?php echo $_GET['search'] ?? '' ?>">
-                            </div>
-                            <div class="col-md-4">
-                                <select name="kategori" class="form-select">
-                                    <option value="">Semua Kategori</option>
-                                    <?php foreach ($kategori ?? [] as $k): ?>
-                                        <option value="<?php echo $k['id_kategori']; ?>" <?php echo (($_GET['kategori'] ?? '') == $k['id_kategori']) ? 'selected' : ''; ?>>
-                                            <?php echo $k['nama_kategori']; ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                            <div class="col-md-4">
-                                <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search"></i> Filter</button>
-                            </div>
-                        </form>
+<div class="card mb-4 shadow-sm border-0">
+    <div class="card-body p-3">
+        <form method="get">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-5">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light text-muted"><i class="bi bi-search"></i></span>
+                        <input type="text" name="search" class="form-control" placeholder="Cari nama atau alamat kuliner..." value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
                     </div>
                 </div>
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light text-muted"><i class="bi bi-tags"></i></span>
+                        <select name="kategori" class="form-select">
+                            <option value="">Semua Kategori</option>
+                            <?php foreach ($kategori ?? [] as $k): ?>
+                                <option value="<?php echo $k['id_kategori']; ?>" <?php echo ((isset($_GET['kategori']) && $_GET['kategori'] == $k['id_kategori'])) ? 'selected' : ''; ?>>
+                                    <?php echo $k['nama_kategori']; ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary w-100 fw-semibold">
+                        <i class="bi bi-sliders me-1"></i> Filter Data
+                    </button>
+                </div>
+            </div>
         </form>
     </div>
 </div>
@@ -117,8 +115,7 @@ $cuaca = $cuaca ?? ['desc' => '-', 'temp' => '-', 'humidity' => '-'];
                 </thead>
                 <tbody>
                     <?php if (!empty($kuliner)): ?>
-                        <?php $no = 1;
-                        foreach ($kuliner as $k): ?>
+                        <?php $no = 1; foreach ($kuliner as $k): ?>
                             <tr>
                                 <td><?php echo $no++; ?></td>
                                 <td>
@@ -132,9 +129,10 @@ $cuaca = $cuaca ?? ['desc' => '-', 'temp' => '-', 'humidity' => '-'];
                                     <span class="badge bg-info"><?php echo $k['nama_kategori'] ?? '-'; ?></span>
                                 </td>
                                 <td>
-                                    <button type="button" class="btn btn-warning btn-sm text-dark fw-bold" data-bs-toggle="modal" data-bs-target="#modalVoucher<?php echo $k['id']; ?>" title="Beli Voucher">
-                                        <i class="bi bi-ticket-perforated-fill"></i>
-                                    </button>
+                                    <div class="d-inline-block text-nowrap text-warning" title="Rating: <?php echo $k['rating'] ?? 0; ?>">
+                                        <?php echo render_bintang($k['rating'] ?? 0); ?>
+                                        <small class="text-muted ms-1 text-dark">(<?php echo number_format($k['rating'] ?? 0, 1); ?>)</small>
+                                    </div>
                                 </td>
                                 <td>
                                     <small><?php echo htmlspecialchars($k['review_text'] ?? '-'); ?></small>
@@ -155,7 +153,7 @@ $cuaca = $cuaca ?? ['desc' => '-', 'temp' => '-', 'humidity' => '-'];
                                             <i class="bi bi-ticket-perforated-fill"></i>
                                         </a>
 
-                                        <?php if (session()->get('role') != 'pengunjung'): ?>
+                                        <?php if (session()->get('role') === 'admin'): ?>
                                             <a href="/kuliner/edit/<?php echo $k['id']; ?>" class="btn btn-primary btn-sm" title="Ubah Data">
                                                 <i class="bi bi-pencil"></i>
                                             </a>
@@ -166,45 +164,6 @@ $cuaca = $cuaca ?? ['desc' => '-', 'temp' => '-', 'humidity' => '-'];
                                     </div>
                                 </td>
                             </tr>
-
-                            <!-- Modal Beli Voucher -->
-                            <div class="modal fade" id="modalVoucher<?php echo $k['id']; ?>" mercantile-id="midtrans-sandbox" tabindex="-1" aria-hidden="true">
-                                <div class="modal-dialog modal-dialog-centered">
-                                    <div class="modal-content border-0 shadow">
-                                        <div class="modal-header bg-warning text-dark border-0 py-3">
-                                            <h5 class="modal-title fw-bold"><i class="bi bi-wallet2 me-1"></i> Midtrans Sandbox Simulator</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                        </div>
-                                        <div class="modal-body p-4 text-start">
-                                            <div class="text-center mb-3">
-                                                <span class="badge bg-light text-dark border p-2 mb-2">ORDER ID: VCH-<?php echo time(); ?>-<?php echo $k['id']; ?></span>
-                                                <h4 class="fw-bold text-dark mb-0">Rp 50.000</h4>
-                                            </div>
-                                            <hr class="text-muted">
-                                            <div class="mb-2 small">
-                                                <span class="text-muted d-block">Nama Item:</span>
-                                                <strong class="text-dark">Voucher Digital <?php echo $k['nama']; ?></strong>
-                                            </div>
-                                            <div class="mb-2 small">
-                                                <span class="text-muted d-block">Metode Simulasi:</span>
-                                                <span class="badge bg-success-subtle text-success border border-success-subtle"><i class="bi bi-check-circle-fill"></i> Snap API Automated Sandbox</span>
-                                            </div>
-                                            <div class="mb-4 small">
-                                                <span class="text-muted d-block">Pelanggan:</span>
-                                                <strong class="text-dark">Moorlaila (moorlaila@student.dinus.ac.id)</strong>
-                                            </div>
-
-                                            <div class="alert alert-info py-2 small border-0 mb-0">
-                                                <i class="bi bi-info-circle-fill me-1"></i> Modul transaksi Payment Gateway (Midtrans) dikonfigurasi sukses untuk demo tugas Pemrograman Web Lanjut.
-                                            </div>
-                                        </div>
-                                        <div class="modal-footer border-0 p-3 bg-light">
-                                            <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
-                                            <button type="button" class="btn btn-primary btn-sm px-3" onclick="alert('Simulasi Transaksi Berhasil! Kode voucher otomatis dikirimkan ke email.'); $('#modalVoucher<?php echo $k['id']; ?>').modal('hide');">Bayar Sekarang</button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
@@ -237,77 +196,3 @@ $cuaca = $cuaca ?? ['desc' => '-', 'temp' => '-', 'humidity' => '-'];
 </script>
 
 <?php echo $this->endSection(); ?>
-=======
-<!-- Tombol Tambah -->
-<a href="<?= base_url('kategori/create'); ?>" class="btn btn-primary mb-3">
-    + Tambah Kategori
-</a>
-
-<table class="table table-bordered">
-    <thead class="table-dark">
-        <tr>
-            <th width="50">No</th>
-            <th>Nama Kategori</th>
-            <th width="200">Aksi</th>
-        </tr>
-    </thead>
-
-    <tbody>
-
-        <?php if (!empty($kategori)): ?>
-
-            <?php $no = 1; ?>
-
-            <?php foreach ($kategori as $k): ?>
-
-                <tr>
-
-                    <!-- Nomor -->
-                    <td><?= $no++; ?></td>
-
-                    <!-- Nama Kategori -->
-                    <td><?= esc($k['nama_kategori']); ?></td>
-
-                    <!-- Tombol Aksi -->
-                    <td>
-
-                        <!-- Tombol Edit -->
-                        <a href="<?= base_url('kategori/edit/' . $k['id_kategori']); ?>"
-                           class="btn btn-warning btn-sm">
-
-                            Edit
-
-                        </a>
-
-                        <!-- Tombol Hapus -->
-                        <a href="<?= base_url('kategori/delete/' . $k['id_kategori']); ?>"
-                           class="btn btn-danger btn-sm"
-                           onclick="return confirm('Yakin ingin menghapus data ini?')">
-
-                            Hapus
-
-                        </a>
-
-                    </td>
-
-                </tr>
-
-            <?php endforeach; ?>
-
-        <?php else: ?>
-
-            <tr>
-                <td colspan="3" class="text-center">
-
-                    Data kosong
-
-                </td>
-            </tr>
-
-        <?php endif; ?>
-
-    </tbody>
-</table>
-
-<?= $this->endSection(); ?>
->>>>>>> 053b1fb2a1721913e229d94d0271865be1200e3a

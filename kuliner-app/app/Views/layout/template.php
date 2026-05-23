@@ -92,7 +92,6 @@
 
 <body>
 
-  <!-- HEADER -->
   <header class="header">
     <div class="d-flex align-items-center">
       <span class="fw-bold fs-4 text-primary">Culinary</span>
@@ -100,18 +99,16 @@
     </div>
 
     <div class="profile d-flex align-items-center">
-      <span class="fw-bold me-2">
-        <?= session()->get('role') == 'pengunjung' ? 'Pengunjung' : 'Admin'; ?>
+      <span class="fw-bold me-2 text-dark">
+        <?= session()->get('role') === 'admin' ? 'Admin' : (session()->get('nama_lengkap') ?? session()->get('username')); ?>
       </span>
       <i class="bi bi-person-circle fs-4 text-primary"></i>
     </div>
   </header>
 
-  <!-- SIDEBAR -->
   <aside class="sidebar">
     <ul class="sidebar-nav">
 
-      <!-- SEMUA -->
       <li>
         <a class="nav-link" href="<?= base_url('kuliner'); ?>">
           <i class="bi bi-house"></i>Dashboard
@@ -119,13 +116,12 @@
       </li>
 
       <li>
-        <a class="nav-link" href="<?= base_url('kuliner'); ?>">
+        <a class="nav-link" href="<?= base_url('jelajah'); ?>">
           <i class="bi bi-geo-alt"></i>Jelajah Kuliner
         </a>
       </li>
 
-      <!-- ADMIN ONLY -->
-      <?php if (session()->get('role') == 'admin'): ?>
+      <?php if (session()->get('role') === 'admin'): ?>
 
         <li class="mt-3 text-muted small">Manajemen</li>
 
@@ -149,7 +145,6 @@
 
       <?php endif; ?>
 
-      <!-- UMUM -->
       <li class="mt-3 text-muted small">Pengaturan</li>
 
       <li>
@@ -167,7 +162,6 @@
     </ul>
   </aside>
 
-  <!-- MAIN -->
   <main id="main">
     <div class="container-fluid">
       <?= $this->renderSection('content'); ?>

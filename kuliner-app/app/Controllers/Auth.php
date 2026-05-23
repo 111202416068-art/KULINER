@@ -21,6 +21,7 @@ class Auth extends BaseController
         $username = $this->request->getPost('username');
         $password = $this->request->getPost('password');
 
+        // Membaca data user dari tabel 'users'
         $user = $db->table('users')
             ->where('username', $username)
             ->get()
@@ -30,16 +31,29 @@ class Auth extends BaseController
             return redirect()->back()->with('error', 'User tidak ditemukan');
         }
 
-        // Catatan: Sebaiknya gunakan password_hash & password_verify untuk keamanan
-        if ($user['password'] != $password) {
+        // Verifikasi kesesuaian password
+        if (password_verify($password, $user['password'])) {
+            $passwordValid = true;
+        } else {
+            $passwordValid = ($user['password'] === $password);
+        }
+
+        if (!$passwordValid) {
             return redirect()->back()->with('error', 'Password salah');
         }
 
+        // 🔥 KUNCI OTOMATIS ROLE USER (ANTI-TABRAKAN)
+        // Jika username-nya adalah 'admin', maka set role sebagai 'admin'.
+        // Jika selain itu (akun baru hasil daftar), paksa role-nya menjadi 'user' secara mutlak!
+        $roleFix = ($user['username'] === 'admin' || (isset($user['role']) && $user['role'] === 'admin')) ? 'admin' : 'user';
+
+
         session()->set([
-            'id'        => $user['id'], // ID ini yang dipakai buat relasi tabel review
-            'username'  => $user['username'],
-            'role'      => $user['role'],
-            'logged_in' => true
+            'id'           => $user['id'] ?? $user['id_user'] ?? 1,
+            'username'     => $user['username'],
+            'nama_lengkap' => $user['nama_lengkap'] ?? $user['username'], // <-- TAMBAHKAN INI biar nama aslinya kesimpan
+            'role'         => $roleFix,
+            'logged_in'    => true
         ]);
 
         return redirect()->to('/kuliner');
@@ -48,12 +62,13 @@ class Auth extends BaseController
     public function logout()
     {
         session()->destroy();
+        // DISINKRONKAN: Diarahkan ke rute login asli, bukan /auth
         return redirect()->to('/login');
     }
 
-    public function register()
+    // Fungsi pembuat akun admin lama (nama diubah agar anti-tabrakan/anti-redeclare)
+    public function buatAdmin()
     {
-        // PERBAIKAN: Hapus baris 'id' => $user['id'] karena ID akan otomatis (Auto Increment)
         $model = new UserModel();
         $model->save([
             'username'     => 'admin',
@@ -65,15 +80,36 @@ class Auth extends BaseController
         echo "User admin berhasil dibuat. Silakan login.";
     }
 
-    public function pengunjung()
+    // Tampilkan halaman form register resmi untuk User
+    public function register()
     {
-        // PERBAIKAN: Jangan pakai ID 0 karena akan error Foreign Key di database.
-        // Sebaiknya arahkan pengunjung ke halaman tanpa perlu set session ID dummy.
-        session()->set([
-            'role'      => 'pengunjung',
-            'logged_in' => true
+        return view('auth/register');
+    }
+
+    // Eksekusi simpan akun baru ke database (Versi Bypass Kolom Email)
+    public function saveRegister()
+    {
+        $db = \Config\Database::connect();
+
+        $nama     = $this->request->getPost('nama_lengkap');
+        $username = $this->request->getPost('username');
+        $password = $this->request->getPost('password');
+
+        // AMAN: Kita cek ketersediaan akun berdasarkan USERNAME saja, tidak memanggil kolom email
+        $cek = $db->table('users')->where('username', $username)->get()->getRowArray();
+        if ($cek) {
+            return redirect()->back()->with('error', 'Username sudah terdaftar! Gunakan username yang lain.');
+        }
+
+        // Simpan data ke tabel users tanpa memasukkan kolom email
+        $db->table('users')->insert([
+            'nama_lengkap' => $nama,
+            'username'     => $username,
+            'password'     => password_hash($password, PASSWORD_DEFAULT),
+            'role'         => 'user'
         ]);
 
-        return redirect()->to('/kuliner');
+        // DISINKRONKAN: Mengarahkan kembali ke halaman login asli (/login) dengan pesan sukses
+        return redirect()->to('/login')->with('success', 'Akun berhasil dibuat! Silakan login menggunakan username baru Anda.');
     }
 }
