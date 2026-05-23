@@ -6,12 +6,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><?= (isset($title)) ? $title : 'Culinary'; ?> | Culinary</title>
 
+  <link rel="icon" type="image/png" href="<?= base_url('assets/img/logo.png'); ?>">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
@@ -58,7 +63,7 @@
       top: 65px;
       left: 0;
       background: #FFFFFF;
-      box-shadow: 4px 0 15px rgba(140, 98, 57, 0.03);
+      box-shadow: 4px 0 15px rgba(140, 98, 57, 0.03) !important;
       padding: 25px 20px;
       transition: all 0.3s;
       border-right: 1px solid #F5EBE6;
@@ -120,7 +125,7 @@
       background-color: #8C6239 !important;
     }
 
-    /* 🎨 UTOMATISASI TOMBOL TEMA BUMI */
+    /* AUTOMATISASI TOMBOL TEMA BUMI */
     .btn-primary {
       background-color: #8C6239 !important;
       border-color: #8C6239 !important;
@@ -165,6 +170,7 @@
 
   <header class="header">
     <div class="d-flex align-items-center">
+      <img src="<?= base_url('assets/img/logo.png'); ?>" alt="Logo Culinary" class="me-2" style="height: 38px; width: 38px; object-fit: cover; border-radius: 50%;">
       <span class="fw-bold fs-4 text-moka" style="letter-spacing: -0.5px;">Culinary.</span>
       <i class="bi bi-list toggle-sidebar-btn"></i>
     </div>
