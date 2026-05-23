@@ -10,7 +10,9 @@ class KulinerModel extends Model
     protected $primaryKey       = 'id';
     protected $useAutoIncrement = true;
     protected $returnType       = 'array';
-    protected $allowedFields    = ['nama', 'alamat', 'kategori_id', 'lat', 'lng', 'foto'];
+    
+    // FIX DATA MUTASI: Mendaftarkan harga_voucher agar diizinkan masuk ke database oleh system
+    protected $allowedFields    = ['nama', 'alamat', 'kategori_id', 'lat', 'lng', 'foto', 'harga_voucher'];
 
     // Method vital untuk menggabungkan data kuliner, kategori, dan ulasan review terbaru
     public function getKulinerWithRating($search = null, $kategori = null)

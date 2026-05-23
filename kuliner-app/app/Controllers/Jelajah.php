@@ -15,24 +15,19 @@ class Jelajah extends BaseController
         // 1. Ambil data kuliner murni
         $kuliner = $db->table('kuliner')->get()->getResultArray();
 
-        // 2. Ambil data kategori pendukung
+        // 2. Ambil data kategori pendukung secara real-time dari database
         $kategoriList = $db->table('kategori')->get()->getResultArray();
 
         // 3. Proses mapping deteksi nama kategori
         foreach ($kuliner as &$k) {
-            // Kita cari tahu apakah ada kolom di tabel kuliner yang langsung berisi teks (bukan angka ID)
-            // Misalnya kolom tersebut bernama 'kategori' dan isinya sudah tulisan "Cafe" atau "Restoran"
             $kolomTeksKategori = $k['kategori'] ?? null;
 
             if ($kolomTeksKategori && !is_numeric($kolomTeksKategori)) {
-                // Jika kolom berisi teks langsung seperti "Cafe", langsung pakai saja!
                 $k['nama_kategori'] = $kolomTeksKategori;
             } else {
-                // Jika isinya angka ID, mari kita cocokkan dengan tabel kategori
-                $k['nama_kategori'] = 'Umum'; // Default awal jika tidak ketemu
+                $k['nama_kategori'] = 'Umum'; 
 
-                // Cek semua kemungkinan nama kolom ID di tabel kuliner kamu
-                $idKategoriDiKuliner = $k['id_kategori'] ?? $k['id_kat'] ?? $k['kategori'] ?? $k['kategori_id'] ?? null;
+                $idKategoriDiKuliner = $k['kategori_id'] ?? $k['id_kategori'] ?? $k['id_kat'] ?? $k['kategori'] ?? null;
 
                 foreach ($kategoriList as $kat) {
                     if ($idKategoriDiKuliner != null && $idKategoriDiKuliner == $kat['id_kategori']) {
@@ -43,11 +38,14 @@ class Jelajah extends BaseController
             }
         }
 
+        // 🔥 FIX SINKRONISASI: Mengirim data kategoriList ke dalam view dengan nama variabel 'kategori'
         return view('jelajah/index', [
-            'title'   => 'Jelajah Kuliner',
-            'kuliner' => $kuliner
+            'title'    => 'Jelajah Kuliner',
+            'kuliner'  => $kuliner,
+            'kategori' => $kategoriList // Sekarang view bisa membaca kategori buatanmu!
         ]);
     }
+
     public function detail($id)
     {
         if (!session()->get('logged_in')) {
@@ -65,7 +63,7 @@ class Jelajah extends BaseController
         // Ambil ulasan dari tabel review untuk kuliner ini
         $review = $db->table('review')
             ->where('kuliner_id', $id)
-            ->orderBy('created_at', 'DESC')
+            ->orderBy('id', 'DESC') // Disesuaikan menggunakan primary key 'id' agar seragam
             ->get()
             ->getResultArray();
 

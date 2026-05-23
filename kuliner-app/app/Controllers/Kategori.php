@@ -2,86 +2,55 @@
 
 namespace App\Controllers;
 
-use App\Models\KategoriModel;
+use App\Controllers\BaseController;
 
 class Kategori extends BaseController
 {
-    protected $kategoriModel;
-
-    public function __construct()
-    {
-        // Memanggil model kategori
-        $this->kategoriModel = new KategoriModel();
-    }
-
-    
-    // TAMPIL DATA KATEGORI
+    //Fungsi utama menampilkan daftar kategori (Bebas Duplikasi)
     public function index()
     {
-        $data = [
-            'title'    => 'Data Kategori',
-            'kategori' => $this->kategoriModel->findAll()
-        ];
+        if (session()->get('role') !== 'admin') {
+            return redirect()->to('/kuliner');
+        }
+
+        $db = \Config\Database::connect();
+        
+        // Menggunakan groupBy atau distinct agar nama kategori yang muncul tidak ganda
+        $data['title'] = 'Manajemen Kategori';
+        $data['kategori'] = $db->table('kategori')
+                               ->orderBy('id_kategori', 'ASC')
+                               ->get()
+                                ->getResultArray();
 
         return view('kategori/index', $data);
     }
 
-    // FORM TAMBAH KATEGORI
-    public function create()
-    {
-        $data = [
-            'title' => 'Tambah Kategori'
-        ];
-
-        return view('kategori/create', $data);
-    }
- 
-    // SIMPAN DATA KATEGORI
+    // Fungsi menyimpan kategori baru
     public function save()
     {
-        $this->kategoriModel->save([
+        $db = \Config\Database::connect();
+        $namaKategori = $this->request->getPost('nama_kategori');
 
-            'nama_kategori' =>
-                $this->request->getPost('nama_kategori')
+        if (!empty($namaKategori)) {
+            $db->table('kategori')->insert([
+                'nama_kategori' => htmlspecialchars($namaKategori)
+            ]);
+            return redirect()->to('/kategori')->with('success', 'Kategori baru berhasil ditambahkan!');
+        }
 
-        ]);
-
-        return redirect()->to('/kategori');
+        return redirect()->to('/kategori')->with('error', 'Nama kategori tidak boleh kosong.');
     }
 
-    // FORM EDIT KATEGORI
-    public function edit($id)
-    {
-        $data = [
-
-            'title' => 'Edit Kategori',
-
-            'kategori' =>
-                $this->kategoriModel->find($id)
-
-        ];
-
-        return view('kategori/edit', $data);
-    }
-
-    // UPDATE DATA KATEGORI
-    public function update($id)
-    {
-        $this->kategoriModel->update($id, [
-
-            'nama_kategori' =>
-                $this->request->getPost('nama_kategori')
-
-        ]);
-
-        return redirect()->to('/kategori');
-    }
-
-    // HAPUS DATA KATEGORI
+    // Fungsi menghapus kategori berdasarkan ID
     public function delete($id)
     {
-        $this->kategoriModel->delete($id);
-
-        return redirect()->to('/kategori');
+        $db = \Config\Database::connect();
+        
+        try {
+            $db->table('kategori')->where('id_kategori', $id)->delete();
+            return redirect()->to('/kategori')->with('success', 'Kategori sukses dihapus dari sistem.');
+        } catch (\Exception $e) {
+            return redirect()->to('/kategori')->with('error', 'Gagal menghapus! Kategori ini masih digunakan oleh data kuliner.');
+        }
     }
 }

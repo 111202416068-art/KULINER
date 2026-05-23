@@ -4,18 +4,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2 family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <title>Login - Culinary Admin</title>
+    
     <style>
         body {
-            background-color: #f6f9ff;
+            background-color: #FDFBF7; /* Warna hangat off-white (Earth Tone Base) */
+            font-family: "Plus Jakarta Sans", sans-serif;
+            color: #4A3E3D;
         }
 
-        .card {
-            border: none;
-            border-radius: 15px;
-            box-shadow: 0px 0 20px rgba(1, 41, 112, 0.1);
+        .card-login {
+            border: none !important;
+            border-radius: 24px !important; /* Membuat sudut box tumpul manis */
+            background-color: #FFFFFF;
+            box-shadow: 0 10px 30px rgba(140, 98, 57, 0.06) !important;
+        }
+
+        .form-control:focus {
+            border-color: #8C6239 !important;
+            box-shadow: 0 0 0 0.25rem rgba(140, 98, 57, 0.15) !important;
+        }
+
+        /* 🎨 CUSTOM BUTTONS TEMA BUMI HANGAT */
+        .btn-moka {
+            background-color: #8C6239 !important;
+            border-color: #8C6239 !important;
+            color: #FFFFFF !important;
+            border-radius: 12px;
+            padding: 10px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+        .btn-moka:hover {
+            background-color: #734F2D !important;
+            box-shadow: 0 4px 12px rgba(115, 79, 45, 0.2) !important;
+        }
+
+        .btn-outline-moka {
+            color: #8C6239 !important;
+            border-color: #D6C5B3 !important;
+            background-color: transparent !important;
+            border-radius: 12px;
+            padding: 9px;
+            transition: all 0.2s ease;
+        }
+        .btn-outline-moka:hover {
+            background-color: #F5EBE6 !important;
+            border-color: #8C6239 !important;
+        }
+
+        /* 🍳 ANIMASI MAKANAN BERGERAK (FLOATING ANIMATION) */
+        .animated-food-box {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 10px;
+            font-size: 24px;
+            color: #E6A15C; /* Warna Terracotta Pastel */
+        }
+
+        .food-icon-1 { animation: floatAnim 3s ease-in-out infinite; }
+        .food-icon-2 { animation: floatAnim 3s ease-in-out infinite 0.7s; }
+        .food-icon-3 { animation: floatAnim 3s ease-in-out infinite 1.4s; }
+
+        @keyframes floatAnim {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-8px) rotate(10deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+        }
+
+        .text-moka {
+            color: #8C6239 !important;
         }
     </style>
 </head>
@@ -23,47 +89,62 @@
 <body>
     <div class="container">
         <div class="row justify-content-center align-items-center vh-100">
-            <div class="col-md-4">
-                <div class="card p-4">
+            <div class="col-md-4 px-4">
+                <div class="card card-login p-4">
+                    
                     <div class="text-center mb-4">
-                        <h3 class="fw-bold text-primary">Culinary</h3>
-                        <p class="text-muted small">Masukkan username & password</p>
+                        <div class="animated-food-box">
+                            <i class="bi bi-egg-fried food-icon-1"></i>
+                            <i class="bi bi-cup-hot-fill food-icon-2"></i>
+                            <i class="bi bi-cake2-fill food-icon-3"></i>
+                        </div>
+                        <h2 class="fw-bold text-moka mb-1" style="letter-spacing: -1px;">Culinary.</h2>
+                        <p class="text-muted small">Silakan masukkan akun pendaftaranmu</p>
                     </div>
 
-                    <?php if (session()->getFlashdata('error')): ?>
-                        <div class="alert alert-danger small py-2">
-                            <?= session()->getFlashdata('error') ?>
+                    <?php if (\Config\Services::session()->getFlashdata('error')): ?>
+                        <div class="alert alert-danger border-0 rounded-3 small py-2">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i> <?= \Config\Services::session()->getFlashdata('error') ?>
                         </div>
                     <?php endif; ?>
                     
-                    <?php if (session()->getFlashdata('success')): ?>
-                        <div class="alert alert-success small py-2">
-                            <?= session()->getFlashdata('success') ?>
+                    <?php if (\Config\Services::session()->getFlashdata('success')): ?>
+                        <div class="alert alert-success border-0 rounded-3 small py-2">
+                            <i class="bi bi-check-circle-fill me-1"></i> <?= \Config\Services::session()->getFlashdata('success') ?>
                         </div>
                     <?php endif; ?>
 
                     <form action="<?= base_url('auth/prosesLogin'); ?>" method="post">
+                        <?= csrf_field(); ?>
+                        
                         <div class="mb-3">
-                            <label class="form-label">Username</label>
-                            <input type="text" name="username" class="form-control" required>
+                            <label class="form-label small fw-bold text-secondary">Username</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-muted border-end-0" style="border-radius: 12px 0 0 12px;"><i class="bi bi-person"></i></span>
+                                <input type="text" name="username" class="form-control" style="border-radius: 0 12px 12px 0;" placeholder="Masukkan username..." required>
+                            </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Password</label>
-                            <input type="password" name="password" class="form-control" required>
+                        <div class="mb-4">
+                            <label class="form-label small fw-bold text-secondary">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light text-muted border-end-0" style="border-radius: 12px 0 0 12px;"><i class="bi bi-lock"></i></span>
+                                <input type="password" name="password" class="form-control" style="border-radius: 0 12px 12px 0;" placeholder="••••••••" required>
+                            </div>
                         </div>
 
-                        <button type="submit" class="btn btn-primary w-100 mb-2">
-                            <i class="bi bi-box-arrow-in-right"></i> Login
+                        <button type="submit" class="btn btn-moka w-100 mb-3 shadow-sm">
+                            <i class="bi bi-box-arrow-in-right me-1"></i> Masuk Ke Sistem
                         </button>
 
-                        <div class="text-center mt-3">
-                            <small class="text-muted">Belum punya akun? </small>
-                            <a href="<?= base_url('auth/register'); ?>" class="btn btn-outline-secondary btn-sm w-100 mt-2 fw-semibold">
-                                <i class="bi bi-pencil-square"></i> Buat Akun Baru (Register)
+                        <div class="text-center mt-2 border-top pt-3">
+                            <small class="text-muted d-block mb-2">Belum bergabung dengan mitra kami?</small>
+                            <a href="<?= base_url('auth/register'); ?>" class="btn btn-outline-moka btn-sm w-100 fw-semibold shadow-sm">
+                                <i class="bi bi-pencil-square me-1"></i> Buat Akun Baru (Register)
                             </a>
                         </div>
                     </form>
+
                 </div>
             </div>
         </div>

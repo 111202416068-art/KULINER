@@ -17,7 +17,7 @@ class Kuliner extends BaseController
         $this->kulinerModel = new KulinerModel();
         $this->kategoriModel = new KategoriModel();
         $this->reviewModel = new ReviewModel();
-        
+
         // Load helper bawaan dan custom helper bintang
         helper(['bintang', 'url', 'form']);
     }
@@ -27,7 +27,6 @@ class Kuliner extends BaseController
         $search   = $this->request->getVar('search');
         $kategori = $this->request->getVar('kategori');
 
-        // Mengambil data dari model yang sudah diperbaiki query-nya
         $dataKuliner = $this->kulinerModel->getKulinerWithRating($search, $kategori);
 
         // Hitung statistik dashboard
@@ -50,7 +49,7 @@ class Kuliner extends BaseController
                     'timeout' => 5
                 ]);
                 $body = json_decode($response->getBody(), true);
-                
+
                 if (isset($body['current_condition'][0])) {
                     $cond = $body['current_condition'][0];
                     $cuaca = [
@@ -99,34 +98,66 @@ class Kuliner extends BaseController
         return view('kuliner/create', $data);
     }
 
+    // 🔥 FIX 100% AMAN: MENGGUNAKAN QUERY BUILDER DIRECT KONEKSI DATABASE
     public function save()
     {
-        $fileFoto = $this->request->getFile('foto');
+        $fileFoto = $this->request->getFile('gambar');
         $namaFoto = 'default.jpg';
-        
+
         if ($fileFoto && $fileFoto->isValid() && !$fileFoto->hasMoved()) {
             $namaFoto = $fileFoto->getRandomName();
             $fileFoto->move('uploads', $namaFoto);
         }
 
-        $this->kulinerModel->save([
-            'nama'        => $this->request->getPost('nama'),
-            'alamat'      => $this->request->getPost('alamat'),
-            'kategori_id' => $this->request->getPost('kategori_id'),
-            'lat'         => $this->request->getPost('lat'),
-            'lng'         => $this->request->getPost('lng'),
-            'foto'        => $namaFoto
+        // Buka koneksi database langsung untuk menghindari limitasi method model
+        $db = \Config\Database::connect();
+
+        // 1. Masukkan data dasar ke tabel kuliner menggunakan query builder langsung
+        $db->table('kuliner')->insert([
+            'nama'          => $this->request->getPost('nama'),
+            'alamat'        => $this->request->getPost('alamat'),
+            'kategori_id'   => $this->request->getPost('kategori_id'),
+            'lat'           => $this->request->getPost('lat'),
+            'lng'           => $this->request->getPost('lng'),
+            'foto'          => $namaFoto,
+            'harga_voucher' => (int)($this->request->getPost('harga_voucher') ?? 50000)
         ]);
 
-        return redirect()->to('/kuliner');
+        // 2. 🔥 AMBIL ID BARU: Menggunakan cara paling sakti di MySQL murni via Driver CI4
+        $idKulinerBaru = $db->insertID();
+
+        // 3. Tangkap input ulasan perdana & bintang dari form tambah data
+        $reviewInput = $this->request->getPost('review');
+        $ratingInput = $this->request->getPost('rating') ?? 5;
+        $userId      = session()->get('id') ?? 1;
+
+        // 4. Inject otomatis ulasan perdana ke tabel review agar tidak muncul tanda "-"
+        if (!empty($reviewInput)) {
+            $db->table('review')->insert([
+                'kuliner_id' => $idKulinerBaru,
+                'user_id'    => $userId,
+                'rating'     => $ratingInput,
+                'isi'        => htmlspecialchars($reviewInput)
+            ]);
+        } else {
+            // Jika dikosongkan, beri ulasan default sistem agar tidak null "-"
+            $db->table('review')->insert([
+                'kuliner_id' => $idKulinerBaru,
+                'user_id'    => $userId,
+                'rating'     => $ratingInput,
+                'isi'        => 'Rekomendasi tempat kuliner baru pilihan komunitas.'
+            ]);
+        }
+
+        return redirect()->to('/kuliner')->with('success', 'Data tempat kuliner, foto, dan ulasan perdana resmi diterbitkan!');
     }
 
     public function edit($id)
     {
         $data = [
             'title'    => 'Edit Data Kuliner',
-            'kuliner'  => $this->kulinerModel->find($id),
             'kategori' => $this->kategoriModel->findAll(),
+            'kuliner'  => $this->kulinerModel->find($id),
             'review'   => $this->reviewModel->where('kuliner_id', $id)->first()
         ];
         return view('kuliner/edit', $data);
@@ -149,7 +180,7 @@ class Kuliner extends BaseController
         $existingReview = $this->reviewModel->where('kuliner_id', $id)->first();
 
         if ($existingReview) {
-            $this->reviewModel->update($existingReview['id_review'], [
+            $this->reviewModel->update($existingReview['id'], [
                 'rating' => $ratingInput,
                 'isi'    => $reviewInput
             ]);

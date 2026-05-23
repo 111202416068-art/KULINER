@@ -1,47 +1,61 @@
-<?php echo $this->extend('layout/template'); ?>
-<?php echo $this->section('content'); ?>
+<?= $this->extend('layout/template'); ?>
+<?= $this->section('content'); ?>
 
-<div class="row justify-content-center py-4">
-    <div class="col-md-6">
-        <div class="card shadow-sm border-0" style="border-radius: 12px;">
-            <div class="card-header bg-white fw-bold text-primary py-3 border-bottom">
-                <i class="bi bi-cart-check-fill me-1"></i> Konfirmasi Pembelian Voucher
-            </div>
-            <div class="card-body p-4">
-                <div class="d-flex align-items-center mb-4 bg-light p-3 rounded">
-                    <img src="/uploads/<?php echo $kuliner['foto'] ?? 'default.jpg'; ?>" width="80" height="60" style="object-fit:cover; border-radius:6px;" class="me-3">
-                    <div>
-                        <h5 class="fw-bold text-dark mb-1"><?php echo $kuliner['nama']; ?></h5>
-                        <small class="text-muted"><i class="bi bi-geo-alt-fill text-danger"></i> <?php echo $kuliner['alamat']; ?></small>
-                    </div>
+<div class="py-2">
+    <div class="pagetitle mb-4">
+        <h1 class="fw-bold text-moka" style="letter-spacing: -0.5px;">Konfirmasi Pesanan Voucher</h1>
+        <p class="text-muted small">Tinjau kembali detail item kuliner dan lengkapi data pengiriman kode voucher digital</p>
+    </div>
+
+    <div class="row">
+        <div class="col-md-5 mb-4">
+            <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
+                <img src="/uploads/<?= $kuliner['foto'] ?? 'default.jpg'; ?>" class="card-img-top" style="height: 220px; object-fit: cover;">
+                <div class="card-body p-4">
+                    <span class="badge-kategori mb-2 d-inline-block">Voucher Pilihan</span>
+                    <h4 class="fw-bold text-dark mb-1"><?= htmlspecialchars($kuliner['nama']); ?></h4>
+                    <p class="text-muted small mb-0"><i class="bi bi-geo-alt-fill text-danger me-1"></i> <?= htmlspecialchars($kuliner['alamat']); ?></p>
                 </div>
+            </div>
+        </div>
 
-                <form action="/payment/proses/<?php echo $kuliner['id']; ?>" mercantile-id="form-konfirmasi" method="post">
+        <div class="col-md-7 mb-4">
+            <div class="card shadow-sm border-0 rounded-4 p-4">
+                <h5 class="fw-bold text-dark mb-4 pb-2 border-bottom"><i class="bi bi-shield-check text-moka me-1"></i> Formulir Klaim Keamanan</h5>
+
+                <form action="/payment/proses/<?= $kuliner['id']; ?>" method="post">
+                    <?= csrf_field(); ?>
+
                     <div class="mb-3">
-                        <label class="form-label fw-bold text-secondary small">Pilih Paket Voucher</label>
-                        <select name="nominal" class="form-select">
-                            <option value="50000">Voucher Makan Hemat - Rp 50.000</option>
-                            <option value="100000">Voucher Makan Puas - Rp 100.000</option>
+                        <label class="form-label small fw-bold text-secondary">Nominal Per Voucher (Rp)</label>
+                        <input type="number" name="nominal" class="form-control rounded-3 bg-light font-monospace fw-bold text-moka" value="<?= $kuliner['harga_voucher'] ?? 50000; ?>" readonly>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold text-secondary">Jumlah Kupon Belanja</label>
+                        <select name="jumlah" class="form-select rounded-3 font-monospace fw-bold" required>
+                            <option value="1">1 Lembar Kupon</option>
+                            <option value="2">2 Lembar Kupon</option>
+                            <option value="3">3 Lembar Kupon</option>
+                            <option value="4">4 Lembar Kupon</option>
+                            <option value="5">5 Lembar Kupon</option>
                         </select>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-bold text-secondary small">Jumlah Voucher</label>
-                        <input type="number" name="jumlah" class="form-control" value="1" min="1" max="5">
-                    </div>
-
                     <div class="mb-4">
-                        <label class="form-label fw-bold text-secondary small">Catatan Tambahan (Opsional)</label>
-                        <textarea name="catatan" class="form-control" rows="2" placeholder="Contoh: Tolong kirim kode unik cepat ya..."></textarea>
+                        <label class="form-label small fw-bold text-secondary">Nomor WhatsApp Aktif Notifikasi</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light text-muted border-end-0" style="border-radius: 12px 0 0 12px;"><i class="bi bi-whatsapp text-success fw-bold"></i></span>
+                            <input type="text" name="whatsapp" class="form-control font-monospace fw-bold" style="border-radius: 0 12px 12px 0;" placeholder="Contoh: 0812xxxxxxx" required>
+                        </div>
+                        <small class="text-muted" style="font-size: 11px;">*Kode QR keamanan tiket belanja akan langsung ditembakkan ke nomor WA ini setelah bayar lunas.</small>
                     </div>
 
-                    <div class="alert alert-warning py-2 small border-0 mb-4">
-                        <i class="bi bi-shield-lock-fill me-1"></i> Pembayaran akan diproses aman melalui Midtrans Sandbox Simulator.
-                    </div>
-
-                    <div class="d-flex gap-2">
-                        <a href="/kuliner" class="btn btn-light w-50 fw-semibold">Batal</a>
-                        <button type="submit" class="btn btn-primary w-50 fw-semibold">Lanjut Pembayaran</button>
+                    <div class="text-end border-top pt-3">
+                        <a href="/jelajah" class="btn btn-outline-secondary px-4 fw-bold me-2">Batal</a>
+                        <button type="submit" class="btn btn-primary px-4 fw-bold shadow-sm">
+                            <i class="bi bi-wallet2 me-1"></i> Amankan & Bayar Voucher
+                        </button>
                     </div>
                 </form>
             </div>
@@ -49,4 +63,21 @@
     </div>
 </div>
 
-<?php echo $this->endSection(); ?>
+<style>
+    .text-moka { color: #8C6239 !important; }
+    .badge-kategori {
+        background-color: #F5EBE6;
+        color: #8C6239;
+        padding: 5px 14px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 600;
+        border: 1px solid #E6D5CC;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #8C6239 !important;
+        box-shadow: 0 0 0 0.25rem rgba(140, 98, 57, 0.15) !important;
+    }
+</style>
+
+<?= $this->endSection(); ?>
