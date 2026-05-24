@@ -35,7 +35,13 @@
     "config": {
         "optimize-autoloader": true,
         "preferred-install": "dist",
-        "sort-packages": true
+        "sort-packages": true,
+        "allow-plugins": {
+            "codeigniter4/framework": true
+        },
+        "platform": {
+            "ext-intl": "8.2"
+        }
     },
     "scripts": {
         "test": "phpunit"
