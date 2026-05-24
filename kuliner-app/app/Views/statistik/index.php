@@ -2,117 +2,123 @@
 <?= $this->section('content'); ?>
 
 <div class="py-2">
-    <div class="pagetitle mb-4">
-        <h1 class="fw-bold text-moka" style="letter-spacing: -0.5px;">Statistik Kuliner</h1>
-        <p class="text-muted small">Visualisasi data grafik distribusi menu tempat makan berdasarkan kategori yang terdaftar</p>
+    <div class="pagetitle mb-4 p-4 rounded-4" style="background: linear-gradient(135deg, #F5EBE6 0%, #E6D5CC 100%);">
+        <h1 class="fw-bold text-dark mb-1" style="letter-spacing: -0.5px;">Dashboard Statistik Kuliner 📊</h1>
+        <p class="text-muted small mb-0">Rangkuman data digital, akumulasi ulasan pelanggan, serta grafik persebaran kategori kuliner.</p>
     </div>
 
-    <?php if (!empty($kategoriData)): ?>
-
-        <script>
-            const kategoriLabels = [
-                <?php foreach ($kategoriData as $k): ?> "<?= $k['nama']; ?>",
-                <?php endforeach; ?>
-            ];
-
-            const kategoriJumlah = [
-                <?php foreach ($kategoriData as $k): ?>
-                    <?= $k['jumlah']; ?>,
-                <?php endforeach; ?>
-            ];
-        </script>
-
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-        <div class="card shadow-sm border-0 rounded-4 p-4 mb-4">
-            <h5 class="fw-bold text-dark mb-3"><i class="bi bi-bar-chart-line-fill text-terracotta me-1"></i> Grafik Jumlah Kuliner Per Kategori</h5>
-            <canvas id="myChart"></canvas>
-        </div>
-
-        <div class="card shadow-sm border-0 rounded-4 p-4">
-            <h5 class="fw-bold text-dark mb-3"><i class="bi bi-pie-chart-fill text-terracotta me-1"></i> Distribusi Kategori Kuliner</h5>
-            <div class="canvas-pie-box" style="max-width: 360px; margin: auto;">
-                <canvas id="pieChart"></canvas>
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="card p-4 text-center border-0 shadow-sm rounded-4 bg-white h-100">
+                <div class="text-moka mb-2"><i class="bi bi-shop fs-1"></i></div>
+                <h6 class="text-muted small fw-bold text-uppercase">Total Kuliner</h6>
+                <h2 class="fw-bold text-dark mb-0"><?= $totalKuliner; ?></h2>
             </div>
         </div>
-
-        <script>
-            // KOLEKSI PALET WARNA BUMI (EARTH TONE COMPONENT)
-            // 1. #8C6239 -> Cokelat Moka Utama
-            // 2. #BE9B7B -> Cokelat Susu Lembut
-            // 3. #E6A15C -> Terracotta / Oranye Tembikar Warm
-            // 4. #D6C5B3 -> Krem Semen Adem
-            // 5. #A78364 -> Latte Matte
-            const earthTonePalette = ['#8C6239', '#BE9B7B', '#E6A15C', '#D6C5B3', '#A78364', '#4A3E3D'];
-
-            // 📊 1. KONFIGURASI DIAGRAM BATANG (BAR CHART)
-            const ctxBar = document.getElementById('myChart');
-            new Chart(ctxBar, {
-                type: 'bar',
-                data: {
-                    labels: kategoriLabels,
-                    datasets: [{
-                        label: 'Jumlah Tempat Kuliner',
-                        data: kategoriJumlah,
-                        backgroundColor: '#8C6239', // Menggunakan Cokelat Moka Utama
-                        borderRadius: 8, // Membuat ujung tiang batang sedikit tumpul estetik
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    plugins: {
-                        legend: {
-                            labels: {
-                                font: { family: 'Plus Jakarta Sans', weight: '600' }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: { stepSize: 1 } // Skala naik per 1 angka bulat (cocok untuk jumlah data)
-                        }
-                    }
-                }
-            });
-
-            // 📊 2. KONFIGURASI DIAGRAM LINGKARAN (PIE CHART)
-            const ctxPie = document.getElementById('pieChart');
-            new Chart(ctxPie, {
-                type: 'pie',
-                data: {
-                    labels: kategoriLabels,
-                    datasets: [{
-                        data: kategoriJumlah,
-                        backgroundColor: earthTonePalette, // Inject variasi warna bumi serasi
-                        borderWidth: 2,
-                        borderColor: '#FFFFFF' // Garis pembatas putih bersih biar kontras mewah
-                    }]
-                },
-                options: {
-                    plugins: {
-                        legend: {
-                            position: 'bottom', // Pindahkan label keterangan ke bawah biar rapi ala GoFood
-                            labels: {
-                                padding: 20,
-                                font: { family: 'Plus Jakarta Sans', size: 12, weight: '500' }
-                            }
-                        }
-                    }
-                }
-            });
-        </script>
-
-    <?php else: ?>
-        <div class="alert alert-light border text-center py-5 text-muted rounded-4">
-            <i class="bi bi-bar-chart-steps fs-2 d-block mb-2 text-muted"></i> Data rekapitulasi statistik kategori belum tersedia.
+        <div class="col-md-4 mb-3">
+            <div class="card p-4 text-center border-0 shadow-sm rounded-4 bg-white h-100">
+                <div class="text-warning mb-2"><i class="bi bi-star-fill fs-1"></i></div>
+                <h6 class="text-muted small fw-bold text-uppercase">Rata-rata Rating</h6>
+                <h2 class="fw-bold text-dark mb-0"><?= $rataRating; ?> <span class="fs-6 text-muted">/ 5.0</span></h2>
+            </div>
         </div>
-    <?php endif; ?>
+        <div class="col-md-4 mb-3">
+            <div class="card p-4 text-center border-0 shadow-sm rounded-4 bg-white h-100">
+                <div class="text-info mb-2"><i class="bi bi-chat-left-heart-fill fs-1"></i></div>
+                <h6 class="text-muted small fw-bold text-uppercase">Total Ulasan</h6>
+                <h2 class="fw-bold text-dark mb-0"><?= $totalReview; ?></h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="card p-4 border-0 shadow-sm rounded-4 bg-white mb-5">
+        <h5 class="fw-bold text-dark mb-4"><i class="bi bi-bar-chart-line-fill text-moka me-2"></i>Grafik Jumlah Kuliner Per Kategori</h5>
+        <div style="position: relative; height: 350px; width: 100%;">
+            <canvas id="chartStatistik"></canvas>
+        </div>
+    </div>
 </div>
 
-<style>
-    .text-moka { color: #8C6239 !important; }
-    .text-terracotta { color: #E6A15C !important; }
-</style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const ctx = document.getElementById('chartStatistik').getContext('2d');
+        
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                // 🔥 SINKRONISASI LABEL: Sekarang melooping nama_kategori, bukan nama toko!
+                labels: [
+                    <?php if (!empty($kategoriData)): ?>
+                        <?php foreach ($kategoriData as $kd) : ?>
+                            "<?= addslashes(htmlspecialchars_decode($kd['nama_kategori'])); ?>",
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                ],
+                datasets: [{
+                    label: 'Jumlah Tempat Kuliner',
+                    // 🔥 SINKRONISASI DATA: Mengambil kolom akumulasi jumlah totalnya
+                    data: [
+                        <?php if (!empty($kategoriData)): ?>
+                            <?php foreach ($kategoriData as $kd) : ?>
+                                <?= $kd['jumlah']; ?>,
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    ],
+                    backgroundColor: '#8C6239', // Warna moka hangat khas tema bumi kamu
+                    borderColor: '#734F2D',
+                    borderWidth: 0,
+                    borderRadius: 10,
+                    borderSkipped: false,
+                    barPercentage: 0.5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            font: {
+                                family: "'Plus Jakarta Sans', sans-serif",
+                                weight: '500'
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            font: {
+                                family: "'Plus Jakarta Sans', sans-serif",
+                                size: 12
+                            },
+                            color: '#4A3E3D'
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: '#F5EBE6'
+                        },
+                        ticks: {
+                            stepSize: 1, // Memaksa skala sumbu Y naik per angka bulat (1, 2, 3...)
+                            font: {
+                                family: "'Plus Jakarta Sans', sans-serif"
+                            },
+                            color: '#4A3E3D'
+                        }
+                    }
+                }
+            }
+        });
+    });
+</script>
 
 <?= $this->endSection(); ?>
